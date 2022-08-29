@@ -116,3 +116,13 @@ type PipelineRunStatus struct {
 func (*PipelineRun) GetGroupVersionKind() schema.GroupVersionKind {
 	return SchemeGroupVersion.WithKind(pipeline.PipelineRunControllerName)
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PipelineRunList contains a list of PipelineRun
+type PipelineRunList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []PipelineRun `json:"items,omitempty"`
+}

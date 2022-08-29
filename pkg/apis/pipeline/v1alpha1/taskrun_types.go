@@ -93,3 +93,13 @@ var _ kmeta.OwnerRefable = (*TaskRun)(nil)
 func (*TaskRun) GetGroupVersionKind() schema.GroupVersionKind {
 	return SchemeGroupVersion.WithKind(pipeline.TaskRunControllerName)
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TaskRunList contains a list of TaskRun
+type TaskRunList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []TaskRun `json:"items"`
+}

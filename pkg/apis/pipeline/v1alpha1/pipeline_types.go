@@ -5,6 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"knative.dev/pkg/apis"
 	"knative.dev/pkg/kmeta"
 )
 
@@ -23,6 +24,13 @@ type Pipeline struct {
 	// +optional
 	Spec PipelineSpec `json:"spec"`
 }
+
+var (
+	// Check that AddressableService can be validated and defaulted.
+	_ apis.Validatable   = (*Pipeline)(nil)
+	_ apis.Defaultable   = (*Pipeline)(nil)
+	_ kmeta.OwnerRefable = (*Pipeline)(nil)
+)
 
 // PipelineSpec defines the desired state of Pipeline.
 type PipelineSpec struct {
@@ -83,4 +91,14 @@ var _ kmeta.OwnerRefable = (*Pipeline)(nil)
 // GetGroupVersionKind implements kmeta.OwnerRefable.
 func (*Pipeline) GetGroupVersionKind() schema.GroupVersionKind {
 	return SchemeGroupVersion.WithKind(pipeline.PipelineControllerName)
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PipelineList contains a list of Pipeline
+type PipelineList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Pipeline `json:"items"`
 }
