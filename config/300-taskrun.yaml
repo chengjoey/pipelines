@@ -1,0 +1,179 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: taskruns.zchengjoey.dev
+  labels:
+    zchengjoey.dev/release: devel
+    knative.dev/crd-install: "true"
+spec:
+  group: zchengjoey.dev
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - taskRef
+              properties:
+                status:
+                  description: Used for cancelling a taskrun (and maybe more later on)
+                  type: string
+                taskRef:
+                  type: object
+                  properties:
+                    name:
+                      description: 'Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names'
+                      type: string
+                taskSpec:
+                  type: object
+                  properties:
+                    command:
+                      description: 'Entrypoint array. Not executed within a shell. The image''s ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container''s environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell'
+                      type: array
+                      items:
+                        type: string
+                    description:
+                      description: Description is a user-facing description of the task that may be used to populate a UI.
+                      type: string
+                    image:
+                      description: 'Docker image name. More info: https://kubernetes.io/docs/concepts/containers/images'
+                      type: string
+                    name:
+                      description: Name of the Step specified as a DNS_LABEL. Each Step in a Task must have a unique name.
+                      type: string
+            status:
+              type: object
+              required:
+                - taskSpec
+              properties:
+                annotations:
+                  description: Annotations is additional Status fields for the Resource to save some additional State as well as convey more information to the user. This is roughly akin to Annotations on any k8s resource, just the reconciler conveying richer information outwards.
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                completionTime:
+                  description: CompletionTime is the time the build completed.
+                  type: string
+                conditions:
+                  description: Conditions the latest available observations of a resource's current state.
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                    properties:
+                      lastTransitionTime:
+                        description: LastTransitionTime is the last time the condition transitioned from one status to another. We use VolatileTime in place of metav1.Time to exclude this from creating equality.Semantic differences (all other things held constant).
+                        type: string
+                      message:
+                        description: A human readable message indicating details about the transition.
+                        type: string
+                      reason:
+                        description: The reason for the condition's last transition.
+                        type: string
+                      severity:
+                        description: Severity with which to treat failures of this type of condition. When this is not specified, it defaults to Error.
+                        type: string
+                      status:
+                        description: Status of the condition, one of True, False, Unknown.
+                        type: string
+                      type:
+                        description: Type of condition.
+                        type: string
+                observedGeneration:
+                  description: ObservedGeneration is the 'Generation' of the Service that was last processed by the controller.
+                  type: integer
+                  format: int64
+                podName:
+                  description: PodName is the name of the pod responsible for executing this task's steps.
+                  type: string
+                startTime:
+                  description: StartTime is the time the build is actually started.
+                  type: string
+                steps:
+                  description: Steps describes the state of each build step container.
+                  type: object
+                  properties:
+                    container:
+                      type: string
+                    imageID:
+                      type: string
+                    name:
+                      type: string
+                    running:
+                      description: Details about a running container
+                      type: object
+                      properties:
+                        startedAt:
+                          description: Time at which the container was last (re-)started
+                          type: string
+                    terminated:
+                      description: Details about a terminated container
+                      type: object
+                      properties:
+                        containerID:
+                          description: Container's ID in the format 'docker://<container_id>'
+                          type: string
+                        exitCode:
+                          description: Exit status from the last termination of the container
+                          type: integer
+                          format: int32
+                        finishedAt:
+                          description: Time at which the container last terminated
+                          type: string
+                        message:
+                          description: Message regarding the last termination of the container
+                          type: string
+                        reason:
+                          description: (brief) reason from the last termination of the container
+                          type: string
+                        signal:
+                          description: Signal from the last termination of the container
+                          type: integer
+                          format: int32
+                        startedAt:
+                          description: Time at which previous execution of the container started
+                          type: string
+                    waiting:
+                      description: Details about a waiting container
+                      type: object
+                      properties:
+                        message:
+                          description: Message regarding why the container is not yet running.
+                          type: string
+                        reason:
+                          description: (brief) reason the container is not yet running.
+                          type: string
+                taskSpec:
+                  description: TaskSpec contains the Spec from the dereferenced Task definition used to instantiate this TaskRun.
+                  type: object
+                  properties:
+                    command:
+                      description: 'Entrypoint array. Not executed within a shell. The image''s ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container''s environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell'
+                      type: array
+                      items:
+                        type: string
+                    description:
+                      description: Description is a user-facing description of the task that may be used to populate a UI.
+                      type: string
+                    image:
+                      description: 'Docker image name. More info: https://kubernetes.io/docs/concepts/containers/images'
+                      type: string
+                    name:
+                      description: Name of the Step specified as a DNS_LABEL. Each Step in a Task must have a unique name.
+                      type: string
+  names:
+    kind: TaskRun
+    plural: taskruns
+    singular: taskrun
+    categories:
+      - all
+      - knative
+  scope: Namespaced

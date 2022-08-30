@@ -1,24 +1,10 @@
 #!/usr/bin/env bash
 
-# Copyright 2019 The Knative Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 set -o errexit
 set -o nounset
 set -o pipefail
 
-source $(git rev-parse --show-toplevel)/vendor/knative.dev/hack/codegen-library.sh
+source $(dirname $0)/../vendor/knative.dev/hack/codegen-library.sh
 export PATH="$GOBIN:$PATH"
 
 function run_yq() {
@@ -46,17 +32,25 @@ ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
   "pipeline:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
-#group "Update CRD Schema"
-#
-#go run $(dirname $0)/../cmd/schema/ dump SimpleDeployment \
-#  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
-#  $(dirname $0)/../config/300-simpledeployment.yaml -
-#
-#go run $(dirname $0)/../cmd/schema/ dump AddressableService \
-#  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
-#  $(dirname $0)/../config/300-addressableservice.yaml -
-#
-#group "Update deps post-codegen"
-#
-## Make sure our dependencies are up-to-date
+group "Update CRD Schema"
+
+go run $(dirname $0)/../cmd/schema/main.go dump TaskRun \
+  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
+  $(dirname $0)/../config/300-taskrun.yaml -
+
+go run $(dirname $0)/../cmd/schema/main.go dump PipelineRun \
+  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
+  $(dirname $0)/../config/300-pipelinerun.yaml -
+
+go run $(dirname $0)/../cmd/schema/main.go dump Task \
+  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
+  $(dirname $0)/../config/300-task.yaml -
+
+go run $(dirname $0)/../cmd/schema/main.go dump Pipeline \
+  | run_yq eval-all --header-preprocess=false --inplace 'select(fileIndex == 0).spec.versions[0].schema.openAPIV3Schema = select(fileIndex == 1) | select(fileIndex == 0)' \
+  $(dirname $0)/../config/300-pipeline.yaml -
+
+group "Update deps post-codegen"
+
+# Make sure our dependencies are up-to-date
 #${REPO_ROOT_DIR}/hack/update-deps.sh
