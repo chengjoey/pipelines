@@ -1,0 +1,7 @@
+apiVersion: zchengjoey.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: hello-world
+spec:
+  taskRef:
+    name: hello-world
