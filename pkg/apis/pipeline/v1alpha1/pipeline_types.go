@@ -2,9 +2,11 @@ package v1alpha1
 
 import (
 	"github.com/chengjoey/pipelines/pkg/apis/pipeline"
+	"github.com/chengjoey/pipelines/pkg/dag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/apis"
 	"knative.dev/pkg/kmeta"
 )
@@ -58,6 +60,51 @@ type PipelineTask struct {
 	// TaskSpec is a specification of a task
 	// +optional
 	TaskSpec *EmbeddedTask `json:"taskSpec,omitempty"`
+
+	// RunAfter is the list of PipelineTask names that should be executed before
+	// this Task executes. (Used to force a specific ordering in graph execution.)
+	// +optional
+	// +listType=atomic
+	RunAfter []string `json:"runAfter,omitempty"`
+}
+
+func (pt PipelineTask) Key() string {
+	return pt.Name
+}
+
+func (pt PipelineTask) Deps() []string {
+	deps := sets.NewString()
+	for _, dep := range pt.RunAfter {
+		if deps.Has(dep) {
+			continue
+		}
+		deps.Insert(dep)
+	}
+	return deps.List()
+}
+
+// PipelineTaskList a list of pipeline task
+type PipelineTaskList []PipelineTask
+
+// Items return all PipelineTaskList to dat task list
+func (l PipelineTaskList) Items() []dag.Task {
+	tasks := make([]dag.Task, 0)
+	for _, pt := range l {
+		tasks = append(tasks, pt)
+	}
+	return tasks
+}
+
+// Deps returns a map with key as name of a pipelineTask and value as a list of its dependencies
+func (l PipelineTaskList) Deps() map[string][]string {
+	deps := make(map[string][]string)
+	for _, pt := range l {
+		dep := pt.Deps()
+		if len(dep) > 0 {
+			deps[pt.Key()] = dep
+		}
+	}
+	return deps
 }
 
 // EmbeddedTask is used to define a Task inline within a Pipeline's PipelineTasks.
