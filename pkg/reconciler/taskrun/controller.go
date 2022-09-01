@@ -5,6 +5,7 @@ import (
 
 	"github.com/chengjoey/pipelines/pkg/apis/pipeline"
 	"github.com/chengjoey/pipelines/pkg/apis/pipeline/v1alpha1"
+	pipelineclient "github.com/chengjoey/pipelines/pkg/client/injection/client"
 	taskruninformer "github.com/chengjoey/pipelines/pkg/client/injection/informers/pipeline/v1alpha1/taskrun"
 	taskrunreconciler "github.com/chengjoey/pipelines/pkg/client/injection/reconciler/pipeline/v1alpha1/taskrun"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -21,12 +22,14 @@ func NewController(ctx context.Context, cmw configmap.Watcher) *controller.Impl 
 	kubeclientset := kubeclient.Get(ctx)
 	taskRunInformer := taskruninformer.Get(ctx)
 	podInformer := podinformer.Get(ctx)
+	pipelinecClientSet := pipelineclient.Get(ctx)
 
 	c := &Reconciler{
-		KubeClientSet: kubeclientset,
-		Clock:         clock.RealClock{},
-		taskRunLister: taskRunInformer.Lister(),
-		podLister:     podInformer.Lister(),
+		PipelineClientSet: pipelinecClientSet,
+		KubeClientSet:     kubeclientset,
+		Clock:             clock.RealClock{},
+		taskRunLister:     taskRunInformer.Lister(),
+		podLister:         podInformer.Lister(),
 	}
 	impl := taskrunreconciler.NewImpl(ctx, c, func(impl *controller.Impl) controller.Options {
 		return controller.Options{

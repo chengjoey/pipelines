@@ -57,6 +57,9 @@ type TaskSpec struct {
 	// +optional
 	// +listType=atomic
 	Command []string `json:"command,omitempty" protobuf:"bytes,4,rep,name=command"`
+	// +optional
+	// +listType=atomic
+	Args []string `json:"args,omitempty" protobuf:"bytes,5,rep,name=args"`
 }
 
 // TaskList contains a list of Task

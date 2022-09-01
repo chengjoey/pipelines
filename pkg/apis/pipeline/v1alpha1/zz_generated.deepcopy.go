@@ -600,6 +600,11 @@ func (in *TaskSpec) DeepCopyInto(out *TaskSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Args != nil {
+		in, out := &in.Args, &out.Args
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
