@@ -41,6 +41,11 @@ spec:
                           name:
                             description: Name is the name of this task within the context of a Pipeline. Name is used as a coordinate with the `from` and `runAfter` fields to establish the execution order of tasks relative to one another.
                             type: string
+                          runAfter:
+                            description: RunAfter is the list of PipelineTask names that should be executed before this Task executes. (Used to force a specific ordering in graph execution.)
+                            type: array
+                            items:
+                              type: string
                           taskRef:
                             description: TaskRef is a reference to a task definition.
                             type: object
@@ -167,6 +172,11 @@ spec:
                           name:
                             description: Name is the name of this task within the context of a Pipeline. Name is used as a coordinate with the `from` and `runAfter` fields to establish the execution order of tasks relative to one another.
                             type: string
+                          runAfter:
+                            description: RunAfter is the list of PipelineTask names that should be executed before this Task executes. (Used to force a specific ordering in graph execution.)
+                            type: array
+                            items:
+                              type: string
                           taskRef:
                             description: TaskRef is a reference to a task definition.
                             type: object
