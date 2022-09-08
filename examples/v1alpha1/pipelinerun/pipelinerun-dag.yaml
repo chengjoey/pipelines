@@ -1,0 +1,115 @@
+#	 b     a
+#	 |    / \
+#	 |   |   x
+#	 |   | / |
+#	 |   y   |
+#	  \ /    z
+#	   w
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-b
+spec:
+  name: dag-b
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-a
+spec:
+  name: dag-a
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-x
+spec:
+  name: dag-x
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-y
+spec:
+  name: dag-y
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-z
+spec:
+  name: dag-z
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Task
+metadata:
+  name: dag-w
+spec:
+  name: dag-w
+  image: alpine
+  command:
+    - sleep
+  args:
+    - "20"
+---
+apiVersion: zchengjoey.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: pipelinerun-dag
+spec:
+  pipelineSpec:
+    description: pipelinerun-dag
+    tasks:
+      - name: dag-b
+        taskRef:
+          name: dag-b
+      - name: dag-a
+        taskRef:
+          name: dag-a
+      - name: dag-x
+        taskRef:
+          name: dag-x
+        runAfter:
+          - dag-a
+      - name: dag-y
+        taskRef:
+          name: dag-y
+        runAfter:
+          - dag-a
+          - dag-x
+      - name: dag-z
+        taskRef:
+          name: dag-z
+        runAfter:
+          - dag-x
+      - name: dag-w
+        taskRef:
+          name: dag-w
+        runAfter:
+          - dag-y
+          - dag-b

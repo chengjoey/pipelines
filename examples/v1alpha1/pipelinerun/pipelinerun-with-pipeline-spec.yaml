@@ -1,0 +1,11 @@
+apiVersion: zchengjoey.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: pipelinerun-with-spec
+spec:
+  pipelineSpec:
+    description: pipelinerun-with-pipeline-spec
+    tasks:
+      - name: task-spec
+        taskRef:
+          name: hello-world

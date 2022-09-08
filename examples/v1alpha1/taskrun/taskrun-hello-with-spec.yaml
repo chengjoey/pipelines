@@ -1,0 +1,12 @@
+apiVersion: zchengjoey.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: hello-world-with-spec
+spec:
+  taskSpec:
+    name: echo-hello-world-spec
+    image: alpine
+    command:
+      - echo
+    args:
+      - "hello world"

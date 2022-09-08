@@ -225,6 +225,10 @@ spec:
                 startTime:
                   description: StartTime is the time the PipelineRun is actually started.
                   type: string
+                taskRuns:
+                  description: Deprecated - use ChildReferences instead. map of PipelineRunTaskRunStatus with the taskRun name as the key
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
   names:
     kind: PipelineRun
     plural: pipelineruns

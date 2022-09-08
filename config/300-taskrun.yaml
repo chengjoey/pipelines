@@ -19,8 +19,6 @@ spec:
           properties:
             spec:
               type: object
-              required:
-                - taskRef
               properties:
                 status:
                   description: Used for cancelling a taskrun (and maybe more later on)
