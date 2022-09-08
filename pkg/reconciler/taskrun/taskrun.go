@@ -199,7 +199,7 @@ func (r *Reconciler) prepare(ctx context.Context, tr *v1alpha1.TaskRun) (*v1alph
 	logger := logging.FromContext(ctx)
 	tr.SetDefaults(ctx)
 
-	task, err := resources.GetTaskFuncFromTaskRun(ctx, r.PipelineClientSet, tr)
+	task, err := resources.GetTaskFromTaskRun(ctx, r.PipelineClientSet, tr)
 	if err != nil {
 		logger.Errorf("Failed to fetch task reference: %s: %v", tr.Spec.TaskRef.Name, err)
 		tr.Status.MarkResourceFailed(podconvert.ReasonFailedResolution, err)
@@ -229,7 +229,7 @@ func (r *Reconciler) prepare(ctx context.Context, tr *v1alpha1.TaskRun) (*v1alph
 		}
 		return &task.Spec, nil
 	}
-	return tr.Spec.TaskSpec, nil
+	return tr.Status.TaskSpec, nil
 }
 
 func (r *Reconciler) checkPodFailed(tr *v1alpha1.TaskRun) (bool, v1alpha1.TaskRunReason, string) {

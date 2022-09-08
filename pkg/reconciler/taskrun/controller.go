@@ -16,17 +16,17 @@ import (
 	"knative.dev/pkg/controller"
 )
 
-// NewController creates a Reconciler and returns the result of NewImpl.
+// NewController creates a Reconciler
 // instantiates a new controller.Impl from knative.dev/pkg/controller
 func NewController(ctx context.Context, cmw configmap.Watcher) *controller.Impl {
-	kubeclientset := kubeclient.Get(ctx)
+	kubeClientSet := kubeclient.Get(ctx)
 	taskRunInformer := taskruninformer.Get(ctx)
 	podInformer := podinformer.Get(ctx)
-	pipelinecClientSet := pipelineclient.Get(ctx)
+	pipelineClientSet := pipelineclient.Get(ctx)
 
 	c := &Reconciler{
-		PipelineClientSet: pipelinecClientSet,
-		KubeClientSet:     kubeclientset,
+		PipelineClientSet: pipelineClientSet,
+		KubeClientSet:     kubeClientSet,
 		Clock:             clock.RealClock{},
 		taskRunLister:     taskRunInformer.Lister(),
 		podLister:         podInformer.Lister(),

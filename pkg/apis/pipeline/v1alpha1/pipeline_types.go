@@ -11,6 +11,13 @@ import (
 	"knative.dev/pkg/kmeta"
 )
 
+const (
+	// PipelineTasksAggregateStatus is a param representing aggregate status of all dag pipelineTasks
+	PipelineTasksAggregateStatus = "tasks.status"
+	// PipelineTasks is a value representing a task is a member of "tasks" section of the pipeline
+	PipelineTasks = "tasks"
+)
+
 // +genclient
 // +genreconciler
 // +genclient:noStatus
@@ -117,7 +124,7 @@ type EmbeddedTask struct {
 	Spec runtime.RawExtension `json:"spec,omitempty"`
 
 	// +optional
-	Metadata PipelineTaskMetadata `json:"metadata,omitempty"`
+	Metadata *PipelineTaskMetadata `json:"metadata,omitempty"`
 
 	// TaskSpec is a specification of a task
 	// +optional

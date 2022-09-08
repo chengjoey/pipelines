@@ -24,29 +24,29 @@ type Node struct {
 }
 
 type Graph struct {
-	nodes map[string]*Node
+	Nodes map[string]*Node
 }
 
 func Build(tasks Tasks) (*Graph, error) {
 	g := &Graph{
-		nodes: make(map[string]*Node),
+		Nodes: make(map[string]*Node),
 	}
 	for _, pt := range tasks.Items() {
 		node := &Node{
 			Task: pt,
 		}
-		if _, ok := g.nodes[pt.Key()]; ok {
+		if _, ok := g.Nodes[pt.Key()]; ok {
 			return nil, fmt.Errorf("duplicate task: %s", pt.Key())
 		}
-		g.nodes[pt.Key()] = node
+		g.Nodes[pt.Key()] = node
 	}
 	for pt, deps := range tasks.Deps() {
-		next, ok := g.nodes[pt]
+		next, ok := g.Nodes[pt]
 		if !ok {
 			return nil, fmt.Errorf("task: %s not existd in items", pt)
 		}
 		for _, dep := range deps {
-			prev, ok := g.nodes[dep]
+			prev, ok := g.Nodes[dep]
 			if !ok {
 				return nil, fmt.Errorf("dep task: %s not existed in items", dep)
 			}
@@ -106,7 +106,7 @@ func isSchedulable(node *Node, dones sets.String) bool {
 
 func getRoots(g *Graph) []*Node {
 	roots := make([]*Node, 0)
-	for _, node := range g.nodes {
+	for _, node := range g.Nodes {
 		if len(node.Prev) == 0 {
 			roots = append(roots, node)
 		}

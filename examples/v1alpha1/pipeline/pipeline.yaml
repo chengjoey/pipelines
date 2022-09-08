@@ -1,0 +1,9 @@
+apiVersion: zchengjoey.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: hello-world-pipeline
+spec:
+  tasks:
+    - name: print-hello-world
+      taskRef:
+        name: hello-world

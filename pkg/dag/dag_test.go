@@ -106,13 +106,13 @@ func TestFindSchedulableTasks2(t *testing.T) {
 }
 
 func testGraph1(t *testing.T) *dag.Graph {
-	//  b     a
-	//  |    / \
-	//  |   |   x
-	//  |   | / |
-	//  |   y   |
-	//   \ /    z
-	//    w
+	//b     a
+	//|    / \
+	//|   |   x
+	//|   | / |
+	//|   y   |
+	// \ /    z
+	//  w
 	tasks := []v1alpha1.PipelineTask{{
 		Name: "a",
 	}, {

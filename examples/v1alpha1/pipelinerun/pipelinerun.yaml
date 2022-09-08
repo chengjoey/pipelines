@@ -1,0 +1,7 @@
+apiVersion: zchengjoey.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: hello-world-pipelinerun
+spec:
+  pipelineRef:
+    name: hello-world-pipeline

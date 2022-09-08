@@ -5,6 +5,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/clock"
+	"knative.dev/pkg/apis"
 	duckv1beta1 "knative.dev/pkg/apis/duck/v1beta1"
 )
 
@@ -85,6 +88,11 @@ type PipelineRunStatusFields struct {
 	// PipelineRunSpec contains the exact spec used to instantiate the run
 	PipelineSpec *PipelineSpec `json:"pipelineSpec,omitempty"`
 
+	// Deprecated - use ChildReferences instead.
+	// map of PipelineRunTaskRunStatus with the taskRun name as the key
+	// +optional
+	TaskRuns map[string]*PipelineRunTaskRunStatus `json:"taskRuns,omitempty"`
+
 	// list of TaskRun and Run names, PipelineTask names, and API versions/kinds for children of this PipelineRun.
 	// +optional
 	// +listType=atomic
@@ -93,6 +101,52 @@ type PipelineRunStatusFields struct {
 	// FinallyStartTime is when all non-finally tasks have been completed and only finally tasks are being executed.
 	// +optional
 	FinallyStartTime *metav1.Time `json:"finallyStartTime,omitempty"`
+}
+
+// PipelineRunReason represents a reason for the pipeline run "Succeeded" condition
+type PipelineRunReason string
+
+const (
+	// PipelineRunReasonStarted is the reason set when the PipelineRun has just started
+	PipelineRunReasonStarted PipelineRunReason = "Started"
+	// PipelineRunReasonRunning is the reason set when the PipelineRun is running
+	PipelineRunReasonRunning PipelineRunReason = "Running"
+	// PipelineRunReasonSuccessful is the reason set when the PipelineRun completed successfully
+	PipelineRunReasonSuccessful PipelineRunReason = "Succeeded"
+	// PipelineRunReasonCompleted is the reason set when the PipelineRun completed successfully with one or more skipped Tasks
+	PipelineRunReasonCompleted PipelineRunReason = "Completed"
+	// PipelineRunReasonFailed is the reason set when the PipelineRun completed with a failure
+	PipelineRunReasonFailed PipelineRunReason = "Failed"
+	// PipelineRunReasonCancelled is the reason set when the PipelineRun cancelled by the user
+	// This reason may be found with a corev1.ConditionFalse status, if the cancellation was processed successfully
+	// This reason may be found with a corev1.ConditionUnknown status, if the cancellation is being processed or failed
+	PipelineRunReasonCancelled PipelineRunReason = "Cancelled"
+	// PipelineRunReasonPending is the reason set when the PipelineRun is in the pending state
+	PipelineRunReasonPending PipelineRunReason = "PipelineRunPending"
+	// PipelineRunReasonTimedOut is the reason set when the PipelineRun has timed out
+	PipelineRunReasonTimedOut PipelineRunReason = "PipelineRunTimeout"
+	// PipelineRunReasonStopping indicates that no new Tasks will be scheduled by the controller, and the
+	// pipeline will stop once all running tasks complete their work
+	PipelineRunReasonStopping PipelineRunReason = "PipelineRunStopping"
+	// PipelineRunReasonCancelledRunningFinally indicates that pipeline has been gracefully cancelled
+	// and no new Tasks will be scheduled by the controller, but final tasks are now running
+	PipelineRunReasonCancelledRunningFinally PipelineRunReason = "CancelledRunningFinally"
+	// PipelineRunReasonStoppedRunningFinally indicates that pipeline has been gracefully stopped
+	// and no new Tasks will be scheduled by the controller, but final tasks are now running
+	PipelineRunReasonStoppedRunningFinally PipelineRunReason = "StoppedRunningFinally"
+)
+
+func (pr PipelineRunReason) String() string {
+	return string(pr)
+}
+
+// PipelineRunTaskRunStatus contains the name of the PipelineTask for this TaskRun and the TaskRun's Status
+type PipelineRunTaskRunStatus struct {
+	// PipelineTaskName is the name of the PipelineTask.
+	PipelineTaskName string `json:"pipelineTaskName,omitempty"`
+	// Status is the TaskRunStatus for the corresponding TaskRun
+	// +optional
+	Status *TaskRunStatus `json:"status,omitempty"`
 }
 
 // ChildStatusReference is used to point to the statuses of individual TaskRuns and Runs within this PipelineRun.
@@ -110,6 +164,86 @@ type PipelineRunStatus struct {
 
 	// PipelineRunStatusFields inlines the status fields.
 	PipelineRunStatusFields `json:",inline"`
+}
+
+// MarkRunning changes the Succeeded condition to Unknown with the provided reason and message.
+func (pr *PipelineRunStatus) MarkRunning(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkUnknown(apis.ConditionSucceeded, reason, messageFormat, messageA...)
+}
+
+// MarkFailed changes the Succeeded condition to False with the provided reason and message.
+func (pr *PipelineRunStatus) MarkFailed(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkFalse(apis.ConditionSucceeded, reason, messageFormat, messageA...)
+	succeeded := pr.GetCondition(apis.ConditionSucceeded)
+	pr.CompletionTime = &succeeded.LastTransitionTime.Inner
+}
+
+// MarkSucceeded changes the Succeeded condition to True with the provided reason and message.
+func (pr *PipelineRunStatus) MarkSucceeded(reason, messageFormat string, messageA ...interface{}) {
+	pipelineRunCondSet.Manage(pr).MarkTrueWithReason(apis.ConditionSucceeded, reason, messageFormat, messageA...)
+	succeeded := pr.GetCondition(apis.ConditionSucceeded)
+	pr.CompletionTime = &succeeded.LastTransitionTime.Inner
+}
+
+var pipelineRunCondSet = apis.NewBatchConditionSet()
+
+// GetCondition returns the Condition matching the given type.
+func (prs *PipelineRunStatus) GetCondition(t apis.ConditionType) *apis.Condition {
+	return pipelineRunCondSet.Manage(prs).GetCondition(t)
+}
+
+// SetCondition sets the condition, unsetting previous conditions with the same
+// type as necessary.
+func (pr *PipelineRunStatus) SetCondition(newCond *apis.Condition) {
+	if newCond != nil {
+		pipelineRunCondSet.Manage(pr).SetCondition(*newCond)
+	}
+}
+
+func (prs *PipelineRunStatus) InitializeConditions(c clock.PassiveClock) {
+	started := false
+	if prs.TaskRuns == nil {
+		prs.TaskRuns = make(map[string]*PipelineRunTaskRunStatus)
+	}
+	if prs.StartTime.IsZero() {
+		prs.StartTime = &metav1.Time{Time: c.Now()}
+		started = true
+	}
+	conditionManager := pipelineRunCondSet.Manage(prs)
+	conditionManager.InitializeConditions()
+	if started {
+		initialCondition := conditionManager.GetCondition(apis.ConditionSucceeded)
+		initialCondition.Reason = PipelineRunReasonStarted.String()
+		conditionManager.SetCondition(*initialCondition)
+	}
+}
+
+func (pr *PipelineRun) GetNamespacedName() types.NamespacedName {
+	return types.NamespacedName{Name: pr.Name, Namespace: pr.Namespace}
+}
+
+func (pr *PipelineRun) IsPending() bool {
+	return pr.Spec.Status == PipelineRunSpecStatusPending
+}
+
+func (pr *PipelineRun) IsDone() bool {
+	return !pr.Status.GetCondition(apis.ConditionSucceeded).IsUnknown()
+}
+
+func (pr *PipelineRun) HasStarted() bool {
+	return pr.Status.StartTime != nil && !pr.Status.StartTime.IsZero()
+}
+
+func (pr *PipelineRun) IsCancelled() bool {
+	return pr.Spec.Status == PipelineRunSpecStatusCancelled
+}
+
+func (pr *PipelineRun) IsGracefullyCancelled() bool {
+	return pr.Spec.Status == PipelineRunSpecStatusCancelledRunFinally
+}
+
+func (pr *PipelineRun) isGracefullyStopped() bool {
+	return pr.Spec.Status == PipelineRunSpecStatusStoppedRunFinally
 }
 
 // GetGroupVersionKind implements kmeta.OwnerRefable.

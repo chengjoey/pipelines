@@ -19,4 +19,7 @@ const (
 
 	// PipelineTaskLabelKey is used as the label identifier for a PipelineTask
 	PipelineTaskLabelKey = GroupName + "/pipelineTask"
+
+	// MemberOfLabelKey is used as the label identifier for a PipelineTask
+	MemberOfLabelKey = GroupName + "/memberOf"
 )

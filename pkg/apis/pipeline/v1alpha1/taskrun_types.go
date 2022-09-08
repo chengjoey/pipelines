@@ -35,6 +35,7 @@ type TaskRun struct {
 
 // TaskRunSpec defines the desired state of TaskRun
 type TaskRunSpec struct {
+	// +optional
 	TaskRef *TaskRef `json:"taskRef,omitempty"`
 	// +optional
 	TaskSpec *TaskSpec `json:"taskSpec,omitempty"`
